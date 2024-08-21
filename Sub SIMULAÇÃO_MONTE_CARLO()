@@ -1,0 +1,168 @@
+Sub SIMULAÇÃO_MONTE_CARLO()
+
+Application.EnableEvents = False
+
+
+Application.DisplayFullScreen = True
+
+'Iniciar simulação
+
+Worksheets("Monte Carlo").Activate  ' Ativar aba de cálculos
+Range("A18:A10017").Clear 'Limpar
+Range("B18:B10017").Clear 'Limpar
+Range("G18:G10017").Clear 'Limpar
+Range("B3:B4").ClearContents 'Limpar
+inicio = Now 'mostra o tempo gasto na simulação
+Range("A1").Select
+Dim i As Long, t As Long, c As Long 'Declarar variáveis
+i = Val(InputBox("Quantas iterações para esta simulação?", , 1000)) 'Inserir quantidade de simulações
+Range("B3") = i
+t = Val(InputBox("Indique uma estimativa de tempo (dias)", , "")) 'Inserir tempo estimado
+Range("E8") = t
+c = Val(InputBox("Indique uma estimativa de custo (R$)", , "")) 'Inserir custo estimado
+Range("K8") = c
+
+'Preparação para numero aleatório
+    Range("B15").Select
+    SELECTION.Copy
+    Range("B17").Select
+    SELECTION.PasteSpecial Paste:=xlPasteFormulas, Operation:=xlNone, _
+        SkipBlanks:=False, Transpose:=False
+        
+    Range("G15").Select
+    SELECTION.Copy
+    Range("G17").Select
+    SELECTION.PasteSpecial Paste:=xlPasteFormulas, Operation:=xlNone, _
+        SkipBlanks:=False, Transpose:=False
+
+'loop
+For n = 1 To i 'Quantidade de simulações
+
+Range("B4") = n 'Contador
+Range("A" & n + 17) = n + 1 '# iteração
+
+Range("B" & n + 17) = Range("B17") ' Simulações amostragem masiva para tempo
+Range("G" & n + 17) = Range("G17") ' Simulações amostragem masiva para custo
+
+Range("B8") = Application.WorksheetFunction.Average(Range("B17:B10017")) 'Média simulação tempo
+Range("H8") = Application.WorksheetFunction.Average(Range("G17:G10017")) 'Média simulação custo
+
+Range("B9") = Application.WorksheetFunction.StDev_S(Range("B17:B10017")) 'Desvio Padrão simulação tempo
+Range("H9") = Application.WorksheetFunction.StDev_S(Range("G17:G10017")) 'Desvio Padrão simulação custo
+
+
+
+
+Next n
+
+'Mensagens ao finalizar a simulação
+
+'Comando para contagem de tempo = avaliação do tempo computacional
+TEMPO = Round(((Now - inicio) * 24 * 60), 2) 'tempo computacional em minutos
+'CRISK = Round(Range("K9") * 100, 2) 'Porcentagem risco custo arredondado
+MsgBox ("Tempo de simulação (min): " & TEMPO) ' mensagem ao terminar a simulação
+MsgBox ("Risco de tempo do projeto (%): " & Range("E9") * 100) ' mensagem ao terminar a simulação. Resultado do risco tempo
+MsgBox ("Risco de custo do projeto (%): " & Range("K9") * 100) ' mensagem ao terminar a simulação. Resultado do risco custo
+Range("B2") = TEMPO 'local onde vai aparecer o tempo computacional gasto na simulação
+
+'Verificação dos valores estimados iniciais com os limites sup e inf
+
+Dim TMAX As Long
+Dim TMIN As Long
+Dim CMAX As Long
+Dim CMIN As Long
+Dim t1 As Long
+Dim c1 As Long
+
+TMAX = Range("B11")
+TMIN = Range("B12")
+CMAX = Range("H11")
+CMIN = Range("H12")
+
+If t > TMAX Then
+MsgBox ("O valor da estimativa de tempo inicial esta fora dos limites!")
+t1 = Val(InputBox("Selecione uma outra estimativa de tempo (dias) entre " & TMIN & "-" & TMAX, , "")) 'Inserir tempo estimado
+Range("E8") = t1
+MsgBox ("Risco de tempo do projeto (%): " & Range("E9") * 100) ' mensagem ao terminar a simulação. Resultado do risco tempo
+
+ElseIf t < TMIN Then
+MsgBox ("O valor da estimativa de custo inicial esta fora dos limites!")
+t1 = Val(InputBox("Selecione uma outra estimativa de tempo (dias) entre " & TMIN & "-" & TMAX, , "")) 'Inserir tempo estimado
+Range("E8") = t1
+MsgBox ("Risco de tempo do projeto (%): " & Range("E9") * 100) ' mensagem ao terminar a simulação. Resultado do risco tempo
+
+End If
+
+If c > CMAX Then
+MsgBox ("O valor da estimativa de custo inicial esta fora dos limites!")
+c1 = Val(InputBox("Selecione uma outra estimativa de custo (R$) entre " & CMIN & "-" & CMAX, , "")) 'Inserir tempo estimado
+Range("K8") = c1
+MsgBox ("Risco de custo do projeto(%): " & Range("K9") * 100) ' mensagem ao terminar a simulação. Resultado do risco custo
+
+ElseIf c < CMIN Then
+MsgBox ("O valor da estimativa de custo inicial esta fora dos limites!")
+c1 = Val(InputBox("Selecione uma outra estimativa de custo (R$) entre " & CMIN & "-" & CMAX, , "")) 'Inserir tempo estimado
+Range("K8") = c1
+MsgBox ("Risco de custo do projeto(%): " & Range("K9") * 100) ' mensagem ao terminar a simulação. Resultado do risco custo
+
+End If
+
+
+
+'Ajustes Finais
+
+  ActiveSheet.ChartObjects("Gráfico 1").Activate 'Ajustar grafico SMC de tempo
+  ActiveChart.Axes(xlCategory).Select
+  ActiveChart.Axes(xlCategory).MaximumScale = Range("B11") + Range("B14")
+  ActiveChart.Axes(xlCategory).MinimumScale = Range("B12") - Range("B14")
+  
+    ActiveSheet.ChartObjects("Gráfico 3").Activate 'Ajustar grafico SMC de custo
+  ActiveChart.Axes(xlCategory).Select
+  ActiveChart.Axes(xlCategory).MaximumScale = Range("H11") + Range("H14")
+  ActiveChart.Axes(xlCategory).MinimumScale = Range("H12") - Range("H14")
+
+Range("A" & i + 17).Select
+Range("A" & i + 17).ClearContents 'Limpar #
+
+Range("B" & i + 17).Select
+Range("B" & i + 17).ClearContents 'Limpar X-SIM tempo
+
+Range("G" & i + 17).Select
+Range("G" & i + 17).ClearContents 'Limpar X-SIM Custo
+
+'Fixar numeros e manter valor X-SIM
+    Range("B17").Select
+    SELECTION.Copy
+    SELECTION.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+    
+    Range("G17").Select
+    SELECTION.Copy
+    SELECTION.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+        :=False, Transpose:=False
+
+Application.CutCopyMode = False
+Range("A1").Select
+
+Worksheets("Dashboard").Activate  ' Ir para Dashboar e mostrar resultados
+
+'Ajustes Graficos Dashboard
+
+  ActiveSheet.ChartObjects("Gráfico 17").Activate 'Ajustar grafico SMC de tempo
+  ActiveChart.Axes(xlCategory).Select
+  ActiveChart.Axes(xlCategory).MaximumScale = Range("T9") + Range("T12")
+  ActiveChart.Axes(xlCategory).MinimumScale = Range("T10") - Range("T12")
+  
+    ActiveSheet.ChartObjects("Gráfico 18").Activate 'Ajustar grafico SMC de custo
+  ActiveChart.Axes(xlCategory).Select
+  ActiveChart.Axes(xlCategory).MaximumScale = Range("U9") + Range("U12")
+  ActiveChart.Axes(xlCategory).MinimumScale = Range("U10") - Range("U12")
+  
+  Range("A1").Select
+Application.DisplayFullScreen = False
+
+Application.EnableEvents = True
+
+
+
+End Sub
